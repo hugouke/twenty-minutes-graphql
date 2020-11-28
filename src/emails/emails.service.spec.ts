@@ -17,6 +17,7 @@ describe('EmailsResolver', () => {
     find: jest.fn(),
     findOne: jest.fn(),
     save: jest.fn(),
+    findOneAndDelete: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -106,6 +107,49 @@ describe('EmailsResolver', () => {
     it('should be throw if email not exists', () => {
       (repository.findOne as jest.Mock).mockReturnValue(undefined);
       expect(service.update(mockData)).rejects.toThrow(new NotFoundException());
+    });
+
+    it('should be throws if called with empty params', async () => {
+      (repository.findOne as jest.Mock).mockReturnValue(mockData);
+      let error;
+      try {
+        await service.update({ ...mockData, name: '' });
+      } catch (err) {
+        error = err;
+      }
+      expect(error[0].property).toBe('name');
+    });
+
+    it('should be returns repository.save return', async () => {
+      const mockUpdatedData = { ...mockData, name: 'updated data' };
+      (repository.findOne as jest.Mock).mockReturnValue(mockData);
+      (repository.save as jest.Mock).mockReturnValue(mockUpdatedData);
+      expect(await service.update(mockUpdatedData)).toEqual(mockUpdatedData);
+      expect(repository.save).toBeCalledWith(mockUpdatedData);
+    });
+  });
+
+  describe('remove()', () => {
+    it('should be called repository.findOneAndDelete', async () => {
+      (repository.findOneAndDelete as jest.Mock).mockReturnValue({
+        value: mockData,
+      });
+      await service.remove(mockData.email);
+      expect(repository.findOneAndDelete).toBeCalledWith({
+        email: mockData.email,
+      });
+    });
+
+    it('should be throw if email not exists', () => {
+      (repository.findOneAndDelete as jest.Mock).mockReturnValue({});
+      expect(service.remove(mockData)).rejects.toThrow(new NotFoundException());
+    });
+
+    it('should be returns removed object', async () => {
+      (repository.findOneAndDelete as jest.Mock).mockReturnValue({
+        value: mockData,
+      });
+      expect(await service.remove(mockData.email)).toEqual(mockData);
     });
   });
 });
