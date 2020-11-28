@@ -33,7 +33,9 @@ export class EmailsService {
       throw new NotFoundException();
     }
     updateEmail.name = name;
-    await validateOrReject(updateEmail);
+    const validateEmail = new Email();
+    Object.assign(validateEmail, updateEmail);
+    await validateOrReject(validateEmail);
     return await this.emailRepository.save(updateEmail);
   }
 
